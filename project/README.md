@@ -34,7 +34,7 @@ pip (Python package manager)
 
 
 1. Clone the repository
-git clone [repository-url]
+git clone git remote add origin https://github.com/Mohammedsabeel063/webknot_assignment.git
 cd campus-event-platform
 
 2. Create and activate virtual environment
@@ -91,3 +91,11 @@ My Experience
     Building something that could actually be useful in a real educational setting
 
 This project has significantly improved my backend development skills and given me confidence in building web applications.
+
+Screenshots:
+
+Database Working
+![Database Working](./screenshots/database%20working.png)
+
+ API
+![API](./screenshots/api.png)
