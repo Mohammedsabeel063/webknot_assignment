@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Event Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card {
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white p-4 shadow-md">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Campus Event Dashboard</h1>
+                <div id="lastUpdated" class="text-sm"></div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto p-4">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="stat-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Colleges</h3>
+                    <p id="totalColleges" class="text-3xl font-bold text-blue-600">0</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Students</h3>
+                    <p id="totalStudents" class="text-3xl font-bold text-green-600">0</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Events</h3>
+                    <p id="totalEvents" class="text-3xl font-bold text-purple-600">0</p>
+                </div>
+                <div class="stat-card bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-gray-500 text-sm font-medium">Total Registrations</h3>
+                    <p id="totalRegistrations" class="text-3xl font-bold text-yellow-600">0</p>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-medium mb-4">Colleges Overview</h3>
+                    <canvas id="collegesChart"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-lg font-medium mb-4">Events Distribution</h3>
+                    <canvas id="eventsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-medium mb-4">Recent Activity</h3>
+                <div id="recentActivity" class="space-y-4">
+                    <!-- Activity items will be added here by JavaScript -->
+                    <div class="text-center text-gray-500 py-4">Loading activities...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Update last updated time
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleString()}`;
+        }
+        updateLastUpdated();
+        setInterval(updateLastUpdated, 60000); // Update every minute
+
+        // Fetch and display dashboard data
+        async function loadDashboardData() {
+            try {
+                // Fetch data from your API
+                const [collegesRes, eventsRes] = await Promise.all([
+                    fetch('/api/v1/colleges/').then(res => res.json()),
+                    // Add more API calls as needed
+                ]);
+
+                // Update stats
+                document.getElementById('totalColleges').textContent = collegesRes.colleges?.length || 0;
+                
+                // Initialize charts
+                initCollegesChart(collegesRes.colleges || []);
+                initEventsChart();
+                
+                // Update recent activity
+                updateRecentActivity(collegesRes.colleges || []);
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Initialize Colleges Chart
+        function initCollegesChart(colleges) {
+            const ctx = document.getElementById('collegesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: colleges.map(c => c.name || 'Unnamed College'),
+                    datasets: [{
+                        label: 'Colleges',
+                        data: colleges.map((c, i) => i + 1), // Just for demo
+                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Events Chart
+        function initEventsChart() {
+            const ctx = document.getElementById('eventsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Upcoming', 'Ongoing', 'Completed'],
+                    datasets: [{
+                        data: [12, 5, 8], // Sample data
+                        backgroundColor: [
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(249, 168, 37, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update recent activity
+        function updateRecentActivity(colleges) {
+            const activityContainer = document.getElementById('recentActivity');
+            if (colleges.length === 0) {
+                activityContainer.innerHTML = '<div class="text-center text-gray-500 py-4">No recent activity found</div>';
+                return;
+            }
+
+            const activities = colleges.slice(0, 5).map(college => `
+                <div class="flex items-center p-3 border-b border-gray-100 hover:bg-gray-50 rounded">
+                    <div class="bg-blue-100 p-2 rounded-full mr-3">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium">${college.name || 'New College'}</p>
+                        <p class="text-sm text-gray-500">Added recently</p>
+                    </div>
+                </div>
+            `).join('');
+
+            activityContainer.innerHTML = activities;
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+    </script>
+</body>
+</html>
