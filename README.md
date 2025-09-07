@@ -95,7 +95,7 @@ This project has significantly improved my backend development skills and given 
 Screenshots:
 
 Database Working
-![Database Working](./screenshots/database%20working.png)
+![Database Working](./project/screenshots/database%20working.png)
 
- API
-![API](./screenshots/api.png)
+API
+![API](./project/screenshots/api.png)
